@@ -7,7 +7,7 @@ export const Photo = forwardRef(
         const inlineStyles = {
             opacity: faded ? '0.2' : '1',
             transformOrigin: '0 0',
-            height: index === 0 ? 310 : 150,
+            height: index === 0 ? (window.innerWidth < 400 ? 140 : 310) : (window.innerWidth < 400 ? 65 : 150),
             gridRowStart: index === 0 ? 'span 2' : null,
             gridColumnStart: index === 0 ? 'span 2' : null,
             backgroundColor: 'white',
