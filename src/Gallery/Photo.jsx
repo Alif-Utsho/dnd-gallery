@@ -7,7 +7,7 @@ export const Photo = forwardRef(
         const inlineStyles = {
             opacity: faded ? '0.2' : '1',
             transformOrigin: '0 0',
-            height: index === 0 ? (window.innerWidth < 400 ? 140 : 310) : (window.innerWidth < 400 ? 65 : 150),
+            height: index === 0 ? (window.innerWidth < 500 ? 200 : 310) : (window.innerWidth < 400 ? 95 : 150),
             gridRowStart: index === 0 ? 'span 2' : null,
             gridColumnStart: index === 0 ? 'span 2' : null,
             backgroundColor: 'white',
@@ -37,28 +37,14 @@ export const Photo = forwardRef(
             transition: 'opacity 0.3s ease',
         };
 
-        const checkboxStyles = {
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            zIndex: 5000,
-            width: '20px',
-            height: '20px',
-            opacity: isHovered || isChecked ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-        };
 
         const handleMouseEnter = () => {
             setIsHovered(true);
-        };
+        };  
 
         const handleMouseLeave = () => {
             setIsHovered(false);
         };
-
-        const handleChange = () => {
-            alert('ok');
-        }
 
         return (
             <div
@@ -70,16 +56,6 @@ export const Photo = forwardRef(
             >
                 <img src={url} alt="" style={imgStyles} />
                 <div style={overlayStyles}></div>
-                <input
-                    type="checkbox"
-                    className='checkbox'
-                    name={index}
-                    value={index}
-                    id={index}
-                    style={checkboxStyles}
-                    checked={isChecked}
-                    onMouseEnter={() => handleCheckboxChange(index)}
-                />
             </div>
         );
     }

@@ -24,6 +24,7 @@ const UploadGallery = () => {
     const [items, setItems] = useState(photos);
     const [activeId, setActiveId] = useState(null);
     const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
+    const [hoveredIndex, setHoveredIndex] = useState(null);
 
     function handleDragStart(event) {
         setActiveId(event.active.id);
@@ -32,14 +33,30 @@ const UploadGallery = () => {
     function handleDragEnd(event) {
         const { active, over } = event;
 
-        if (active.id !== over.id) {
+        if (active && over && active.id !== over.id) {
             setItems((items) => {
                 const oldIndex = items.indexOf(active.id);
                 const newIndex = items.indexOf(over.id);
 
                 return arrayMove(items, oldIndex, newIndex);
             });
+
+            setCheckedIndexes((checkedIndexes) => {
+                const oldIndex = items.indexOf(active.id);
+                const newIndex = items.indexOf(over.id);
+
+                if (checkedIndexes.includes(oldIndex)) {
+                    const updatedCheckedIndexes = checkedIndexes.map((index) =>
+                        index === oldIndex ? newIndex : index
+                    );
+                    return updatedCheckedIndexes;
+                }
+
+                return checkedIndexes;
+            });
+            
         }
+
 
         setActiveId(null);
     }
@@ -68,23 +85,39 @@ const UploadGallery = () => {
         }
     };
 
-    const imageMouseEnter = (e, i) => {
-        const { checkedIndexes } = this.state;
-        if (!checkedIndexes.includes(i)) {
-            e.currentTarget.querySelector('.overlay').style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            e.currentTarget.querySelector('.checkbox').style.opacity = 1;
-        }
+    const restorePhoto = () => {
+        setItems(photos);
     }
 
-    const imageMouseLeave = (e, i) => {
-        const { checkedIndexes } = this.state;
-        if (!checkedIndexes.includes(i)) {
-            e.currentTarget.querySelector('.overlay').style.backgroundColor = 'rgba(0, 0, 0, 0)';
-            e.currentTarget.querySelector('.checkbox').style.opacity = 0;
-        }
+    const deselectAll = () => {
+        setCheckedIndexes([]);
     }
 
-    console.log(checkedIndexes);
+    const getCheckboxStyles = (index) => {
+        return {
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            zIndex: 5,
+            width: '20px',
+            height: '20px',
+            opacity: (hoveredIndex === index) || checkedIndexes.includes(index) ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+        };
+
+    };
+
+    const getInlineStyles = (currentIndex) => {
+        return {
+            opacity: 1,
+            gridRowStart: currentIndex === 0 ? 'span 2' : null,
+            gridColumnStart: currentIndex === 0 ? 'span 2' : null,
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            position: 'relative',
+        };
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -95,7 +128,7 @@ const UploadGallery = () => {
         >
             <SortableContext items={items} strategy={rectSortingStrategy}>
 
-                <div className="card container col-md-8 m-5 mx-auto border-0">
+                <div className="card container col-md-8 m-5 mx-auto p-0 border-0">
                     <div className='card-header bg-white'>
                         <div className="d-flex justify-content-between">
                             <div>
@@ -104,8 +137,10 @@ const UploadGallery = () => {
                                         <div className="flex items-center">
                                             <input
                                                 type="checkbox"
+                                                style={{ width: '15px', height: '15px'}}
                                                 className="me-2 w-4 h-4"
-                                                checked
+                                                onChange={deselectAll}
+                                                defaultChecked
                                             />
                                             <span>{`${checkedIndexes.length} File${checkedIndexes.length > 1 ? 's' : ''} Selected`}</span>
                                         </div>
@@ -116,23 +151,48 @@ const UploadGallery = () => {
                             </div>
                             <div>
                                 {checkedIndexes.length > 0 && (
-                                    <a onClick={()=>handleDelete()} style={{ cursor: 'pointer' }} className='text-danger fs-5'>Delete File{checkedIndexes.length > 1 ? 's' : ''} </a>
+                                    <a onClick={() => handleDelete()} style={{ cursor: 'pointer' }} className='text-danger fs-5'>Delete File{checkedIndexes.length > 1 ? 's' : ''} </a>
                                 )}
                             </div>
                         </div>
 
                     </div>
                     <div className="card-body">
-                        <Grid columns={5}>
+
+                        {
+                            items.length <= 0 && (
+                                <div className='text-center my-5'>
+                                    <h3> <span className='text-danger'>Oops!</span> All photos have been deleted.</h3>
+                                    <h6 className='mt-3'>Wanna Restore? <span onClick={restorePhoto} className='text-primary' style={{cursor: 'pointer'}}>Click me</span></h6>
+                                </div>
+                            )
+                        }
+
+                        <Grid columns={window.innerWidth < 500 ? 3 : 5}>
                             {items.map((url, index) => (
-                                <SortablePhoto
-                                    key={url}
-                                    url={url} 
-                                    index={index} 
-                                    isChecked = {checkedIndexes.includes(index)}
-                                    checkedIndexes={checkedIndexes}
-                                    handleCheckboxChange={handleCheckboxChange}
-                                />
+
+                                <div
+                                    key={index}
+                                    style={getInlineStyles(index)}
+                                    onMouseEnter={() => setHoveredIndex(index)}
+                                    onMouseLeave={() => setHoveredIndex(null)}
+                                >
+                                    <SortablePhoto
+                                        key={url}
+                                        url={url}
+                                        index={index}
+                                        isChecked={checkedIndexes.includes(index)}
+                                        checkedIndexes={checkedIndexes}
+                                        handleCheckboxChange={handleCheckboxChange}
+                                    />
+
+                                    <input
+                                        type="checkbox"
+                                        style={getCheckboxStyles(index)}
+                                        checked={checkedIndexes.includes(index)}
+                                        onChange={() => handleCheckboxChange(index)}
+                                    />
+                                </div>
                             ))}
                         </Grid>
                     </div>
